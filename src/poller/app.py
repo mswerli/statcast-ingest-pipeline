@@ -29,8 +29,6 @@ def handler(event: dict, context: LambdaContext):
     s3  = boto3.client('s3',  endpoint_url=endpoint_url, region_name='us-east-1')
     sns = boto3.client('sns', endpoint_url=endpoint_url, region_name='us-east-1')
 
-    logger.info(os.environ)
-
     invocation_time = datetime.datetime.fromisoformat(
             event.get('time', datetime.datetime.now(datetime.timezone.utc).isoformat())
     )
