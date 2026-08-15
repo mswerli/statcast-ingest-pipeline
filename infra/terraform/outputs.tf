@@ -32,3 +32,8 @@ output "play_by_play_lambda_arn" {
   description = "Play-by-play Lambda function ARN (empty when pointed at LocalStack)"
   value       = try(aws_lambda_function.play_by_play[0].arn, "")
 }
+
+output "snowflake_storage_integration_role_arn" {
+  description = "IAM role ARN to pass as STORAGE_AWS_ROLE_ARN when running CREATE STORAGE INTEGRATION in Snowflake (empty when pointed at LocalStack)"
+  value       = try(aws_iam_role.snowflake_storage_integration[0].arn, "")
+}

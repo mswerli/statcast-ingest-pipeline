@@ -30,3 +30,30 @@ variable "localstack_enabled" {
   type    = bool
   default = false
 }
+
+# ---------------------------------------------------------------------------
+# Snowflake storage integration (see snowflake.tf)
+# ---------------------------------------------------------------------------
+
+variable "snowflake_storage_prefixes" {
+  description = "S3 key prefixes (no leading slash, trailing slash, no wildcard) Snowflake is allowed to read via the storage integration"
+  type        = list(string)
+  default     = ["raw/", "processed/", "play-by-play/"]
+}
+
+variable "snowflake_storage_aws_iam_user_arn" {
+  description = <<-EOT
+    STORAGE_AWS_IAM_USER_ARN from `DESC STORAGE INTEGRATION`. Left as AWS's
+    documented placeholder until the Snowflake-side integration exists (see
+    snowflake-storage-integration.md) — set the real value and re-apply once
+    it's known.
+  EOT
+  type        = string
+  default     = "arn:aws:iam::000000000000:user/placeholder-until-integration-created"
+}
+
+variable "snowflake_storage_aws_external_id" {
+  description = "STORAGE_AWS_EXTERNAL_ID from `DESC STORAGE INTEGRATION`. Placeholder until set — see snowflake_storage_aws_iam_user_arn."
+  type        = string
+  default     = "placeholder-until-integration-created"
+}
