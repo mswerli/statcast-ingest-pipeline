@@ -1,0 +1,4 @@
+MLB-StatsAPI
+aws-lambda-powertools
+boto3
+pyarrow

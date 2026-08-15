@@ -1,0 +1,6 @@
+localstack
+awscli-local
+terraform-local
+aws-sam-cli-local
+pytest
+moto[s3,sns,sqs]

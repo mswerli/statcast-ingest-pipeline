@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Baseball ETL - game poller and play-by-play fetcher
+
+Globals:
+  Function:
+    Timeout: 300
+    Runtime: python3.12
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        POWERTOOLS_LOG_LEVEL: INFO
+    LoggingConfig:
+      LogFormat: JSON
+
+Resources:
+
+  # --- Shared infrastructure ---
+
+  GameCompletedTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: baseball-game-completed
+
+  DataLakeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "baseball-datalake-${AWS::AccountId}"
+
+  # --- Poller ---
+
+  PollerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: poller/
+      Handler: app.handler
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: baseball-poller
+          SNS_TOPIC_ARN: !Ref GameCompletedTopic
+          S3_BUCKET: !Ref DataLakeBucket
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataLakeBucket
+        - S3WritePolicy:
+            BucketName: !Ref DataLakeBucket
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt GameCompletedTopic.TopicName
+      Events:
+        ScheduledPoll:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(6 hours)"
+            Input: '{}'
+
+  # --- Play-by-play queues ---
+
+  PlayByPlayDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: baseball-play-by-play-dlq
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  PlayByPlayQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: baseball-play-by-play
+      VisibilityTimeout: 1800  # 6x function timeout (300s)
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt PlayByPlayDLQ.Arn
+        maxReceiveCount: 2  # original delivery + 1 retry before DLQ
+
+  PlayByPlayQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref PlayByPlayQueue
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt PlayByPlayQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref GameCompletedTopic
+
+  GameCompletedSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref GameCompletedTopic
+      Protocol: sqs
+      Endpoint: !GetAtt PlayByPlayQueue.Arn
+
+  # --- Play-by-play lambda ---
+
+  PlayByPlayFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: play-by-play/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: baseball-play-by-play
+          S3_BUCKET: !Ref DataLakeBucket
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref DataLakeBucket
+        - SQSPollerPolicy:
+            QueueName: !GetAtt PlayByPlayQueue.QueueName
+      Events:
+        GameCompletedSQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt PlayByPlayQueue.Arn
+            BatchSize: 10
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+
+Outputs:
+  PollerFunctionArn:
+    Description: Poller Lambda ARN
+    Value: !GetAtt PollerFunction.Arn
+  PlayByPlayFunctionArn:
+    Description: Play-by-play Lambda ARN
+    Value: !GetAtt PlayByPlayFunction.Arn
+  GameCompletedTopicArn:
+    Description: SNS topic ARN for completed game events
+    Value: !Ref GameCompletedTopic
+  DataLakeBucketName:
+    Description: S3 data lake bucket name
+    Value: !Ref DataLakeBucket
+  PlayByPlayQueueUrl:
+    Description: SQS queue URL
+    Value: !Ref PlayByPlayQueue
+  PlayByPlayDLQUrl:
+    Description: Dead letter queue URL
+    Value: !Ref PlayByPlayDLQ

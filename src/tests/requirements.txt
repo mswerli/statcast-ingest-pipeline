@@ -1,0 +1,4 @@
+pybaseball
+MLB-StatsAPI
+boto3
+aws-lambda-powertools

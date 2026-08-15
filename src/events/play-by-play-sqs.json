@@ -1,0 +1,20 @@
+{
+  "Records": [
+    {
+      "messageId": "abc12345-1234-1234-1234-abc123456789",
+      "receiptHandle": "AQEB...",
+      "body": "{\"Type\": \"Notification\", \"MessageId\": \"def67890-5678-5678-5678-def678901234\", \"TopicArn\": \"arn:aws:sns:us-east-1:123456789012:baseball-game-completed\", \"Subject\": \"game.completed\", \"Message\": \"{\\\"game_id\\\": 745506, \\\"game_date\\\": \\\"2025-05-21\\\"}\", \"Timestamp\": \"2025-05-21T22:00:00.000Z\", \"MessageAttributes\": {\"event_type\": {\"Type\": \"String\", \"Value\": \"game.completed\"}}}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1747872000000",
+        "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+        "ApproximateFirstReceiveTimestamp": "1747872001000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "e4e68fb7bd0e697a0ae8f1bb342846b0",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:baseball-play-by-play",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}

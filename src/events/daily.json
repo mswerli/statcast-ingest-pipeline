@@ -1,0 +1,13 @@
+{
+  "version": "0",
+  "id": "abc12345-1234-1234-1234-abc123456789",
+  "source": "aws.scheduler",
+  "account": "123456789012",
+  "time": "2026-05-21T18:00:00Z",
+  "region": "us-east-1",
+  "detail-type": "Scheduled Event",
+  "resources": [
+    "arn:aws:scheduler:us-east-1:123456789012:schedule/default/baseball-poller-schedule"
+  ],
+  "detail": {}
+}

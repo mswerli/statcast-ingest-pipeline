@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  localstack:
+    image: localstack/localstack:latest 
+    ports:
+      - "4566:4566"
+    environment:
+      - DEBUG=0
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+      - ENDPOINT_URL=http://host.docker.internal:4566
+    volumes:
+      - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
