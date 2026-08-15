@@ -1,0 +1,102 @@
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# =============================================================================
+# Terraform
+# =============================================================================
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+crash.log
+crash.*.log
+
+# Local-only var files — never commit these
+infra/terraform/local.tfvars
+*.auto.tfvars
+**/backends/local.hcl
+
+# Terraform debug/scratch output
+infra/terraform/response.json
+
+# Claude Code local settings
+.claude/
+
+# =============================================================================
+# SAM / AWS
+# =============================================================================
+.aws-sam/
+samconfig.toml
+
+# Local event files with environment variables / dummy credentials
+src/events/env.json
+
+# AWS credentials — should never be in source control
+.aws/
+
+# =============================================================================
+# LocalStack
+# =============================================================================
+localstack/
+
+# =============================================================================
+# IDE
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# =============================================================================
+# Build artifacts
+# =============================================================================
+.build/
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.log
+.env
+.env.*
