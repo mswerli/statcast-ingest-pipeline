@@ -25,6 +25,12 @@ locals {
   # the three prefixes the pipeline actually writes (see s3.tf, lambda.tf).
   snowflake_object_arns   = [for p in var.snowflake_storage_prefixes : "${aws_s3_bucket.data_lake.arn}/${p}*"]
   snowflake_list_prefixes = [for p in var.snowflake_storage_prefixes : "${p}*"]
+
+  # IAM rejects fabricated account IDs as a trust principal (e.g. all-zeros),
+  # so until the real STORAGE_AWS_IAM_USER_ARN is known, trust this account's
+  # own root ARN as a placeholder — it's a valid principal but grants no
+  # third party anything, since nothing outside this account can assume it.
+  snowflake_trust_principal = var.snowflake_storage_aws_iam_user_arn != "" ? var.snowflake_storage_aws_iam_user_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
 }
 
 resource "aws_iam_role" "snowflake_storage_integration" {
@@ -39,7 +45,7 @@ resource "aws_iam_role" "snowflake_storage_integration" {
     Statement = [
       {
         Effect    = "Allow"
-        Principal = { AWS = var.snowflake_storage_aws_iam_user_arn }
+        Principal = { AWS = local.snowflake_trust_principal }
         Action    = "sts:AssumeRole"
         Condition = {
           StringEquals = {

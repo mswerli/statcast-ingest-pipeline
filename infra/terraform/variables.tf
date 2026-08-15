@@ -43,13 +43,14 @@ variable "snowflake_storage_prefixes" {
 
 variable "snowflake_storage_aws_iam_user_arn" {
   description = <<-EOT
-    STORAGE_AWS_IAM_USER_ARN from `DESC STORAGE INTEGRATION`. Left as AWS's
-    documented placeholder until the Snowflake-side integration exists (see
-    snowflake-storage-integration.md) — set the real value and re-apply once
-    it's known.
+    STORAGE_AWS_IAM_USER_ARN from `DESC STORAGE INTEGRATION`. Empty string
+    until the Snowflake-side integration exists (see
+    snowflake-storage-integration.md) — IAM rejects made-up account IDs as a
+    trust principal, so snowflake.tf falls back to this account's own root
+    ARN as the placeholder until the real value is set and re-applied.
   EOT
   type        = string
-  default     = "arn:aws:iam::000000000000:user/placeholder-until-integration-created"
+  default     = ""
 }
 
 variable "snowflake_storage_aws_external_id" {

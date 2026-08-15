@@ -14,9 +14,11 @@ side produces, so this is a one-time two-phase apply:
 terraform apply
 ```
 
-This creates `<project>-snowflake-storage-integration-role` trusting a
-placeholder AWS principal — Snowflake doesn't exist yet, so there's nothing
-real to trust on the first pass. Note the role ARN from:
+This creates `<project>-snowflake-storage-integration-role` trusting this
+account's own root ARN as a placeholder principal (IAM rejects made-up
+account IDs, and Snowflake's real IAM user doesn't exist to trust yet on the
+first pass — trusting your own account grants no third party anything).
+Note the role ARN from:
 
 ```
 terraform output snowflake_storage_integration_role_arn
