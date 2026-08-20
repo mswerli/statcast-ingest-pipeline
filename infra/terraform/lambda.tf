@@ -81,7 +81,7 @@ resource "aws_lambda_function" "poller" {
   handler                        = "app.handler"
   runtime                        = "python3.12"
   timeout                        = 300
-  memory_size                    = 128
+  memory_size                    = 512
   architectures                  = ["x86_64"]
   reserved_concurrent_executions = 1  # scheduled job — never needs more than one
 

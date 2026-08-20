@@ -57,6 +57,8 @@ def _flatten_play_by_play(game_id: int) -> list[dict]:
             coords     = pitch_data.get('coordinates', {})
             breaks     = pitch_data.get('breaks', {})
             count      = event.get('count', {})
+            hit_data   = event.get('hitData', {})
+            hit_coords = hit_data.get('coordinates', {})
 
             rows.append({
                 **at_bat_ctx,
@@ -95,6 +97,15 @@ def _flatten_play_by_play(game_id: int) -> list[dict]:
                 'count_balls':      count.get('balls'),
                 'count_strikes':    count.get('strikes'),
                 'count_outs':       count.get('outs'),
+                # batted ball
+                'launch_speed':     hit_data.get('launchSpeed'),
+                'launch_angle':     hit_data.get('launchAngle'),
+                'hit_distance':     hit_data.get('totalDistance'),
+                'trajectory':       hit_data.get('trajectory'),
+                'hardness':         hit_data.get('hardness'),
+                'hit_location':     hit_data.get('location'),
+                'hit_coord_x':      hit_coords.get('coordX'),
+                'hit_coord_y':      hit_coords.get('coordY'),
             })
 
     return rows

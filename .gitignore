@@ -54,6 +54,7 @@ crash.*.log
 
 # Local-only var files — never commit these
 infra/terraform/local.tfvars
+infra/terraform/terraform.tfvars
 *.auto.tfvars
 **/backends/local.hcl
 
