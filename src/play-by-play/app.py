@@ -1,4 +1,5 @@
 import datetime
+import gzip
 import io
 import json
 import os
@@ -24,11 +25,11 @@ def _s3():
     return boto3.client('s3')
 
 
-def _flatten_play_by_play(game_id: int) -> list[dict]:
-    data = statsapi.get('game_playByPlay', params={'gamePk': game_id})
+def _flatten_play_by_play(game_id: int) -> tuple[list[dict], dict]:
+    raw_data = statsapi.get('game_playByPlay', params={'gamePk': game_id})
     rows = []
 
-    for at_bat in data.get('allPlays', []):
+    for at_bat in raw_data.get('allPlays', []):
         about   = at_bat.get('about', {})
         matchup = at_bat.get('matchup', {})
         result  = at_bat.get('result', {})
@@ -108,30 +109,45 @@ def _flatten_play_by_play(game_id: int) -> list[dict]:
                 'hit_coord_y':      hit_coords.get('coordY'),
             })
 
-    return rows
+    return rows, raw_data
 
 
 def _write_play_by_play(game_id: str, game_date: str) -> str:
     invocation_time = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    s3_key = f'play-by-play/game_date={game_date}/game_id={game_id}/{invocation_time}.parquet.gzip'
+    s3_key_parquet = f'play-by-play/parquet/game_date={game_date}/game_id={game_id}/{invocation_time}.parquet.gzip'
+    s3_key_json = f'play-by-play/json/game_date={game_date}/game_id={game_id}/{invocation_time}.json.gzip'
 
     logger.info("Fetching play by play data", game_id=game_id, game_date=game_date)
-    rows = _flatten_play_by_play(int(game_id))
-    logger.info("Fetched play by play data", game_id=game_id, row_count=len(rows))
+    flattened_rows, raw_data = _flatten_play_by_play(int(game_id))
+    logger.info("Fetched play by play data", game_id=game_id, row_count=len(flattened_rows))
 
     buf = io.BytesIO()
-    pq.write_table(pa.Table.from_pylist(rows), buf, compression='gzip')
+    pq.write_table(pa.Table.from_pylist(flattened_rows), buf, compression='gzip')
     buf.seek(0)
 
-    _s3().put_object(
+    s3 = _s3()
+
+    s3.put_object(
         Bucket=BUCKET,
-        Key=s3_key,
+        Key=s3_key_parquet,
         Body=buf.getvalue(),
         ContentType='application/octet-stream',
     )
 
-    logger.info("Wrote play by play data", s3_key=s3_key)
-    return s3_key
+    s3.put_object(
+        Bucket=BUCKET,
+        Key=s3_key_json,
+        Body=gzip.compress(json.dumps(raw_data).encode('utf-8')),
+        ContentType='application/json',
+        ContentEncoding='gzip'
+    )
+
+    logger.info(
+        "Wrote play by play data", 
+        s3_key_parquet=s3_key_parquet,
+        s3_key_json=s3_key_json
+    )
+    return s3_key_parquet
 
 
 def record_handler(record: SQSRecord):
