@@ -54,18 +54,27 @@ build: ## Zip the poller + play-by-play Lambdas into .build/
 # Each Lambda checks AWS_SAM_LOCAL and points its boto3 clients at
 # host.docker.internal:4566 itself, so no --env-vars file is needed here —
 # just make sure `make localstack-up` is running first.
-SAM_TEMPLATE := src/template.yaml
+# NOTE: -t must point at the *built* template so deps from requirements.txt
+# are actually mounted into the container — pointing at src/template.yaml
+# mounts the raw source dir and skips installed dependencies entirely.
+SAM_TEMPLATE := .aws-sam/build/template.yaml
+# Real ARN/bucket values from `make tf-local-apply` — sam local invoke can't
+# resolve !Ref against a real stack, so it substitutes garbage without this.
+SAM_ENV_VARS := src/events/local-env-vars.json
 
-.PHONY: invoke-poller-daily invoke-poller-backfill invoke-play-by-play
+.PHONY: sam-build invoke-poller-daily invoke-poller-backfill invoke-play-by-play
 
-invoke-poller-daily: ## Invoke PollerFunction locally with the daily-poll event
-	sam local invoke PollerFunction -t $(SAM_TEMPLATE) -e src/events/daily.json
+sam-build: ## Build Lambda dependencies for sam local invoke
+	sam build -t src/template.yaml
 
-invoke-poller-backfill: ## Invoke PollerFunction locally with the backfill event
-	sam local invoke PollerFunction -t $(SAM_TEMPLATE) -e src/events/backfill.json
+invoke-poller-daily: sam-build ## Invoke PollerFunction locally with the daily-poll event
+	sam local invoke PollerFunction -t $(SAM_TEMPLATE) -e src/events/daily.json --env-vars $(SAM_ENV_VARS)
 
-invoke-play-by-play: ## Invoke PlayByPlayFunction locally with a fake SQS/SNS event
-	sam local invoke PlayByPlayFunction -t $(SAM_TEMPLATE) -e src/events/play-by-play-sqs.json
+invoke-poller-backfill: sam-build ## Invoke PollerFunction locally with the backfill event
+	sam local invoke PollerFunction -t $(SAM_TEMPLATE) -e src/events/backfill.json --env-vars $(SAM_ENV_VARS)
+
+invoke-play-by-play: sam-build ## Invoke PlayByPlayFunction locally with a fake SQS/SNS event
+	sam local invoke PlayByPlayFunction -t $(SAM_TEMPLATE) -e src/events/play-by-play-sqs.json --env-vars $(SAM_ENV_VARS)
 
 # ── Terraform (delegates to infra/terraform/Makefile) ────────────────────────
 # e.g. `make tf-local-plan`, `make tf-prod-apply`, `make tf-local-destroy`

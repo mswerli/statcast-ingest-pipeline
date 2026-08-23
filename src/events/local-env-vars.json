@@ -1,0 +1,9 @@
+{
+  "PollerFunction": {
+    "SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:000000000000:baseball-datalake-game-completed",
+    "S3_BUCKET": "baseball-datalake-000000000000"
+  },
+  "PlayByPlayFunction": {
+    "S3_BUCKET": "baseball-datalake-000000000000"
+  }
+}
